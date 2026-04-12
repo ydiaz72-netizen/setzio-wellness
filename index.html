@@ -347,11 +347,19 @@
 </div>
 
 <script>
-  // ─── SUPABASE CONFIG ───────────────────────────────────────────────────────
-  // Get your anon key from: Supabase → Settings → API → anon public
+
   const SUPABASE_URL = 'https://dgkcmyyafzhbtzdvtvji.supabase.co'
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRna2NteXlhZnpoYnR6ZHZ0dmppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTEzMjcsImV4cCI6MjA5MDE2NzMyN30.itt1fnbd8gcPKKDmTmdsaoi2e5yzXoNwDnzR8jD3q9M'
-  // ──────────────────────────────────────────────────────────────────────────
+
+  async function getCountry() {
+    try {
+      const res = await fetch('https://ipapi.co/json/')
+      const data = await res.json()
+      return data.country_name || null
+    } catch {
+      return null
+    }
+  }
 
   async function submitWellnessWaitlist() {
     const input = document.getElementById('wellness-email')
@@ -372,6 +380,8 @@
     btn.disabled = true
     input.disabled = true
 
+    const country = await getCountry()
+
     try {
       const res = await fetch(SUPABASE_URL + '/rest/v1/marketing_waitlist', {
         method: 'POST',
@@ -381,10 +391,9 @@
           'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
           'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({ email: email, market: 'eu' })
+        body: JSON.stringify({ email, market: 'eu', source: 'wellness', country })
       })
 
-      // 201 = created, 409 = duplicate (already on list) — both are fine
       if (res.ok || res.status === 409) {
         document.getElementById('form-container').style.display = 'none'
         document.getElementById('success-msg').classList.add('show')
@@ -392,7 +401,6 @@
         throw new Error('Server error: ' + res.status)
       }
     } catch (err) {
-      console.error('Waitlist error:', err)
       btn.textContent = 'Try again'
       btn.disabled = false
       input.disabled = false
@@ -400,6 +408,8 @@
       setTimeout(() => { input.style.boxShadow = '' }, 2500)
     }
   }
+
 </script>
+
 </body>
 </html>
